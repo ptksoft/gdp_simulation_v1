@@ -12,7 +12,7 @@ namespace GDP_Simulation_Demo_V1
     {
         int sx = 50;    // Start X
         int sy = 50;    // Start Y
-        int ph = 20;    // Panel Height
+        int ph = 50;    // Panel Height
         int pw = 5;     // Panel Width
         Panel[] pn = new Panel[220];    // Panel
 
@@ -66,14 +66,14 @@ namespace GDP_Simulation_Demo_V1
             ShowSensor("S4-V", 90);      // S4 - Video
             ShowSensor("S5-V", 160);      // S5 - Video
             ShowSensor("S6-V", 180);      // S6 - Video
-            ShowSensor("S7-V", 214);      // S7 - Microwave
+            ShowSensor("S7-M", 214);      // S7 - Microwave
         }
 
         private void ShowSensor(string sname, int i)
         {
             Label lb = new Label();
             lb.Text = sname;
-            lb.Location = new Point(sx + (i * pw), sy + 25);
+            lb.Location = new Point(sx + (i * pw), sy + ph + 15);
             lb.AutoSize = true;
             this.Controls.Add(lb);
         }
