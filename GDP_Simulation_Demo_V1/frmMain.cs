@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Text;
+using System.IO;
 using System.Windows.Forms;
 
 namespace GDP_Simulation_Demo_V1
@@ -15,6 +16,9 @@ namespace GDP_Simulation_Demo_V1
         int ph = 20;    // Panel Height
         int pw = 5;     // Panel Width
         Panel[] pn = new Panel[220];    // Panel
+        float[,] speed = new float[121, 240];
+        string fileName = "km_sec_speed.txt";
+        float maxSpeed = 0;
 
         public frmMain()
         {
@@ -23,7 +27,56 @@ namespace GDP_Simulation_Demo_V1
 
         private void frmMain_Load(object sender, EventArgs e)
         {
+            // Inititialize speed data 2Hour and 22KM
+            for (int i = 0; i < 121; i++)
+            {
+                for (int j = 0; j < 220; j++)
+                    speed[i, j] = 0;
+            }
+            __LoadDataFromFile();
 
+            for (int t = 0; t < 121; t++)
+            {
+                __Predict(t, 0, 20);    // S1 -> S2
+                __Predict(t, 20, 90);    // S2 -> S4
+                __Predict(t, 90, 160);    // S4 -> S5
+                __Predict(t, 160, 215);    // S5 -> S7
+                __Predict(t, 215, 239);    // S7 -> S..
+            }
+        }
+        private void __LoadDataFromFile()
+        {
+            string line;
+            int km;
+            int sec;
+            float sp;
+
+            StreamReader fp = new StreamReader(fileName);
+            while ((line = fp.ReadLine())!=null) {
+                string[] arr = line.Split(new string[] { "," }, 3, StringSplitOptions.None);
+                //MessageBox.Show("km=" + arr[0] + " sec=" + arr[1] + " speed=" + arr[2]);
+                //break;
+                if (
+                    int.TryParse(arr[0], out km) &&
+                    int.TryParse(arr[1], out sec) &&
+                    float.TryParse(arr[2], out sp)
+                    )
+                {
+                    speed[sec, km] = sp;
+                    if (sp > maxSpeed) maxSpeed = sp;
+                }
+            }
+            fp.Close();
+        }
+        private void __Predict(int sec, int km1, int km2)
+        {
+            float s1 = speed[sec, km1];
+            float d1 = speed[sec, km2] - speed[sec, km1];
+            float d2 = d1 / (km2 - km1);
+            for (int k = (km1 + 1); k < km2; k++)
+            {
+                speed[sec, k] = s1 + ((k-km1)*d2);
+            }
         }
 
         private void frmMain_Shown(object sender, EventArgs e)
@@ -43,7 +96,8 @@ namespace GDP_Simulation_Demo_V1
                 pn[i] = new Panel();
                 pn[i].BorderStyle = BorderStyle.FixedSingle;
                 //pn[i].BackColor = Color.FromArgb(i, Math.Abs(220-i), 0);
-                pn[i].BackColor = Color.FromArgb(25+i, 255-i, 0);
+                //pn[i].BackColor = Color.FromArgb(25+i, 255-i, 0);
+                pn[i].BackColor = Color.Violet;
                 pn[i].Size = new Size(pw, ph);
                 pn[i].Location = new Point(sx + (i * pw), sy);
                 this.Controls.Add(pn[i]);
@@ -83,6 +137,22 @@ namespace GDP_Simulation_Demo_V1
             DateTime DT = new DateTime(2015, 1, 1, 16, 30, 0);
             DT = DT.AddMinutes(tBar.Value);
             lblTime.Text = DT.Hour.ToString() + "." + string.Format("{0:00}", DT.Minute);
+            __RefreshColor(tBar.Value);
+        }
+        private void __RefreshColor(int nSec) 
+        {
+            float sp;
+            int r;
+            int g;
+
+            for (int i = 0; i < 220; i++)
+            {
+                sp = speed[nSec, i];
+                r = (int)((maxSpeed - sp) * (255 / maxSpeed));
+                g = (int)((sp) * (255 / maxSpeed));
+
+                pn[i].BackColor = Color.FromArgb(r, g, 0);                
+            }
         }
 
         private void btnBegin_Click(object sender, EventArgs e)
